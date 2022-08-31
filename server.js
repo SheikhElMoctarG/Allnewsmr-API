@@ -56,7 +56,7 @@ app.get("/", async (req, res)=> {
 (async ()=> {
     await getData();
     await organazition(list);
-    setInterval(()=> {
+    setInterval(async()=> {
         await getData();
         await organazition(list);
     }, 60000 * 1);
