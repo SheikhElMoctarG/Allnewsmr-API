@@ -5,6 +5,7 @@ const sites = require('./sites.json');
 const Feed = require('rss-parser');
 const parser = new Feed();
 const getMetaData = require('metadata-scraper');
+require('express-async-errors');
 require('dotenv').config();
 app.use(cors());// for we can see the server whatever.
 var list = []; // local variable 
@@ -41,8 +42,8 @@ async function getData(){
 
 
 // function to organazition posts in list with date.
-function organazition(listOfPosts){
-    return listOfPosts.sort((firstPost, secondPost)=> {
+function organazition(){
+    list.sort((firstPost, secondPost)=> {
         return new Date(secondPost.isoDate) - new Date(firstPost.isoDate);
     })
 }
@@ -55,10 +56,10 @@ app.get("/", async (req, res)=> {
 // function to run server after every 2 min
 (async ()=> {
     await getData();
-    await organazition(list);
+    await organazition();
     setInterval(async()=> {
         await getData();
-        await organazition(list);
+        await organazition();
     }, 60000 * 1);
 })();
 
