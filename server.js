@@ -11,6 +11,7 @@ var list = []; // local variable
 
 // function to add new post to array = list 
 function addNewPost(data){
+    if(list.forEach(post => post.title == data.title) == undefined)
     list.push({
         title: data.title, 
         link: data.link,
@@ -48,9 +49,17 @@ function organazition(listOfPosts){
 
 
 app.get("/", async (req, res)=> {
-    await getData();
-    await organazition(list);
     await res.send(list);
 });
+
+// function to run server after every 2 min
+(async ()=> {
+    await getData();
+    await organazition(list);
+    setInterval(()=> {
+        await getData();
+        await organazition(list);
+    }, 60000 * 1);
+})();
 
 app.listen(process.env.PORT || 3000, ()=> console.log("listening..."));
