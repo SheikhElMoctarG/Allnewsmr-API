@@ -1,76 +1,107 @@
-const Express = require("express");
-const app = Express();
+const express = require("express");
 const cors = require("cors");
-const sites = require("./sites.json");
-const Feed = require("rss-parser");
-const parser = new Feed();
+const parser = new (require("rss-parser"))();
 const getMetaData = require("metadata-scraper");
-const e = require("cors");
 require("express-async-errors");
 require("dotenv").config();
-app.use(cors()); // for we can see the server whatever.
-var list = []; // local variable
 
-// function to add new post to array = list
-function addNewPost(data, posts_list) {
-  posts_list.push({
-    title: data.title,
-    link: data.link,
-    isoDate: data.isoDate,
-    name: data.name,
-    image: data.image,
-  });
-}
+// Config
+const CONFIG = {
+  PORT: process.env.PORT || 3000,
+  CACHE_REFRESH_INTERVAL_MS: 4 * 60 * 1000, // 4 minutes
+  MAX_POSTS: 20,
+  DEFAULT_IMAGE: process.env.NOTFOUND_IMAGE || 'https://via.placeholder.com/150'
+};
 
-// function to get data from sites
-async function getData() {
-  const temporary_list = [];
-  for (const site of sites) {
-    try {
-      const data = await parser.parseURL(site.url);
-      await data.items.forEach((item) => {
-        getMetaData(item.link, {
-          headers: {
-            Connection: "keep-alive",
-            "Accept-Encoding": "",
-            "Accept-Language": "en-US,en;q=0.8",
-          },
-        })
-          .then((response) => {
-            // to get image from meta codes.
-            item["image"] =
-              response.image != undefined
-                ? response.image
-                : process.env.NOTFOUNIMAGE;
-            item["name"] = site.name;
-            addNewPost(item, temporary_list);
-          })
-          .catch((error) => {
-            console.log(error);
-          });
-      });
-    } catch (error) {}
+// App setup
+const app = express();
+const sites = require("./sites.json");
+let postsCache = [];
+
+// Middleware
+app.use(cors({
+  origin: process.env.ALLOWED_ORIGINS?.split(',') || '*'
+}));
+
+// Helpers
+const processFeedItem = async (item, siteName) => {
+  try {
+    const metadata = await getMetaData(item.link, {
+      headers: {
+        "User-Agent": "AllNewsMR/3.0"
+      }
+    });
+    
+    return {
+      title: item.title,
+      link: item.link,
+      isoDate: item.isoDate,
+      name: siteName,
+      image: metadata?.image || CONFIG.DEFAULT_IMAGE
+    };
+  } catch (error) {
+    console.error(`Failed to process ${item.link}:`, error.message);
+    return {
+      ...item,
+      name: siteName,
+      image: CONFIG.DEFAULT_IMAGE
+    };
   }
-  list = temporary_list;
-}
+};
 
-app.get("/", async (req, res) => {
-  // to sort posts by date
-  list.sort(function (a, b) {
-    return new Date(b.isoDate) - new Date(a.isoDate);
-  });
-  // to filter by 20 only
-  list.slice(0, 20);
-  // response with list of posts
-  res.send(list);
+const fetchAllFeeds = async () => {
+  try {
+    const processingPromises = sites.map(async (site) => {
+      try {
+        const feed = await parser.parseURL(site.url);
+        const items = await Promise.all(
+          feed.items.map(item => processFeedItem(item, site.name))
+        );
+        return items;
+      } catch (error) {
+        console.error(`Failed to fetch ${site.name}:`, error.message);
+        return [];
+      }
+    });
+
+    const results = await Promise.all(processingPromises);
+    postsCache = results.flat()
+      .sort((a, b) => new Date(b.isoDate) - new Date(a.isoDate))
+      .slice(0, CONFIG.MAX_POSTS);
+  } catch (error) {
+    console.error('Feed processing error:', error);
+  }
+};
+
+// Routes
+app.get("/", (req, res) => {
+  res.json(postsCache);
 });
 
-// function to run server after every 2 min
-(async () => {
-  await getData();
-  setInterval(async () => {
-    await getData();
-  }, 60000 * 4);
-})();
+// Health check
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'healthy', lastUpdated: new Date() });
+});
 
-app.listen(process.env.PORT || 3000, () => console.log("listening..."));
+// Initialize
+const startServer = async () => {
+  await fetchAllFeeds();
+  setInterval(fetchAllFeeds, CONFIG.CACHE_REFRESH_INTERVAL_MS);
+  
+  app.listen(CONFIG.PORT, () => {
+    console.log(`Server running on port ${CONFIG.PORT}`);
+    console.log(`Next refresh in ${CONFIG.CACHE_REFRESH_INTERVAL_MS/60000} minutes`);
+  });
+};
+
+// Error handling
+process.on('unhandledRejection', (error) => {
+  console.error('Unhandled rejection:', error);
+});
+
+app.use((error, req, res, next) => {
+  console.error(error);
+  res.status(500).json({ error: 'Internal server error' });
+});
+
+startServer();
