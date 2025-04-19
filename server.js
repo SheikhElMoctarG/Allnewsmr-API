@@ -10,7 +10,7 @@ const CONFIG = {
   PORT: process.env.PORT || 3000,
   CACHE_REFRESH_INTERVAL_MS: 4 * 60 * 1000, // 4 minutes
   MAX_POSTS: 20,
-  DEFAULT_IMAGE: process.env.NOTFOUND_IMAGE || 'https://via.placeholder.com/150'
+  DEFAULT_IMAGE: 'https://g.top4top.io/p_21045amcw1.png' || 'https://via.placeholder.com/150'
 };
 
 // App setup
