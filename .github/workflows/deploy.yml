@@ -35,8 +35,11 @@ jobs:
           docker rm allnewsmr-api || true
         fi
         if sudo lsof -i :3000 | grep LISTEN; then
-          echo "Port 3000 is in use. Killing the process."
-          sudo lsof -i :3000 | awk 'NR>1 {print $2}' | xargs -r sudo kill -9
+          echo "Port 3000 is in use. Stopping and removing the previous container."
+          if [ $(docker ps -a -q -f name=allnewsmr-api) ]; then
+            docker stop allnewsmr-api || true
+            docker rm allnewsmr-api || true
+          fi
         fi
-        docker run -d --name allnewsmr-api -p 3000:3000 allnewsmr-api
+        # docker run -d --name allnewsmr-api -p 3000:3000 allnewsmr-api
         EOF
