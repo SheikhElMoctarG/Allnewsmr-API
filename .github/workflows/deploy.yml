@@ -26,7 +26,7 @@ jobs:
         PROJECT_PATH="Allnewsmr-API"
         IMAGE_NAME="allnewsmr-api"
         CONTAINER_NAME="allnewsmr-api"
-        PORT=3001
+        PORT=3000
 
         if [ ! -d "$PROJECT_PATH/" ]; then
           git clone https://github.com/SheikhElMoctarG/Allnewsmr-API.git 
@@ -46,7 +46,13 @@ jobs:
           echo "Removed container $CONTAINER_NAME."
         fi
         echo "All prompts completed. Starting the container."
-        docker run -d --name $CONTAINER_NAME -p $PORT:3000 $IMAGE_NAME
+        if [ -z "$PORT" ]; then
+          echo "Host port is empty. Binding only the container port."
+          docker run -d --name $CONTAINER_NAME $IMAGE_NAME
+        else
+          echo "Using host port $PORT and container port $PORT."
+          docker run -d --name $CONTAINER_NAME -p $PORT:$PORT $IMAGE_NAME
+        fi
         echo "Container started successfully."
         exit 0
         EOF
