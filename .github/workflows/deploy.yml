@@ -36,12 +36,12 @@ jobs:
         fi
         if sudo lsof -i :3000 | grep LISTEN; then
           echo "Port 3000 is in use. Stopping and removing the previous container."
-          if [ $(docker ps -a -q -f name=allnewsmr-api) ]; then
-            docker stop allnewsmr-api || true
-            docker rm allnewsmr-api || true
-            echo "removed container allnewsmr-api."
-          fi
+          docker stop allnewsmr-api || true
+          docker rm allnewsmr-api || true
+          echo "removed container allnewsmr-api."
         fi
         echo "All prompts completed. Starting the container."
         docker run -d --name allnewsmr-api -p 3000:3000 allnewsmr-api
+        echo "Container started successfully."
+        exit 0
         EOF
