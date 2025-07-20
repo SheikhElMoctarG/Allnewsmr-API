@@ -41,5 +41,6 @@ jobs:
             docker rm allnewsmr-api || true
           fi
         fi
+        echo "All prompts completed. Starting the container."
         docker run -d --name allnewsmr-api -p 3000:3000 allnewsmr-api
         EOF
