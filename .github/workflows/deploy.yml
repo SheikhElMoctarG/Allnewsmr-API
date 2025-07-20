@@ -46,7 +46,7 @@ jobs:
           echo "Removed container $CONTAINER_NAME."
         fi
         echo "All prompts completed. Starting the container."
-        docker run -d --name $CONTAINER_NAME -p $PORT:$PORT $IMAGE_NAME
+        docker run -d --name $CONTAINER_NAME -p $PORT:3000 $IMAGE_NAME
         echo "Container started successfully."
         exit 0
         EOF
