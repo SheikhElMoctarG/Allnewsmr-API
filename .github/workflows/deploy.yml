@@ -30,8 +30,10 @@ jobs:
           git pull origin main
         fi
         docker build -t allnewsmr-api .
-        docker stop allnewsmr-api || true
-        docker rm allnewsmr-api || true
+        if [ $(docker ps -a -q -f name=allnewsmr-api) ]; then
+          docker stop allnewsmr-api || true
+          docker rm allnewsmr-api || true
+        fi
         docker run -d --name allnewsmr-api -p 3000:3000 allnewsmr-api
         # pm2 restart all
         EOF
