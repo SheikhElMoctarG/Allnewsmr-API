@@ -29,5 +29,9 @@ jobs:
           cd Allnewsmr-API
           git pull origin main
         fi
-        pm2 restart all
+        docker build -t allnewsmr-api .
+        docker stop allnewsmr-api || true
+        docker rm allnewsmr-api || true
+        docker run -d --name allnewsmr-api -p 3000:3000 allnewsmr-api
+        # pm2 restart all
         EOF
