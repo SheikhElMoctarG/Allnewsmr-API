@@ -23,25 +23,30 @@ jobs:
         SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
       run: |
         sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST << 'EOF'
-        if [ ! -d "Allnewsmr-API/" ]; then
+        PROJECT_PATH="Allnewsmr-API"
+        IMAGE_NAME="allnewsmr-api"
+        CONTAINER_NAME="allnewsmr-api"
+        PORT=3001
+
+        if [ ! -d "$PROJECT_PATH/" ]; then
           git clone https://github.com/SheikhElMoctarG/Allnewsmr-API.git 
         else
-          cd Allnewsmr-API
+          cd $PROJECT_PATH
           git pull origin main
         fi
-        docker build -t allnewsmr-api .
-        if [ $(docker ps -a -q -f name=allnewsmr-api) ]; then
-          docker stop allnewsmr-api || true
-          docker rm allnewsmr-api || true
+        docker build -t $IMAGE_NAME .
+        if [ $(docker ps -a -q -f name=$CONTAINER_NAME) ]; then
+          docker stop $CONTAINER_NAME || true
+          docker rm $CONTAINER_NAME || true
         fi
-        if sudo lsof -i :3000 | grep LISTEN; then
-          echo "Port 3000 is in use. Stopping and removing the previous container."
-          docker stop allnewsmr-api || true
-          docker rm allnewsmr-api || true
-          echo "removed container allnewsmr-api."
+        if sudo lsof -i :$PORT | grep LISTEN; then
+          echo "Port $PORT is in use. Stopping and removing the previous container."
+          docker stop $CONTAINER_NAME || true
+          docker rm $CONTAINER_NAME || true
+          echo "Removed container $CONTAINER_NAME."
         fi
         echo "All prompts completed. Starting the container."
-        docker run -d --name allnewsmr-api -p 3000:3000 allnewsmr-api
+        docker run -d --name $CONTAINER_NAME -p $PORT:$PORT $IMAGE_NAME
         echo "Container started successfully."
         exit 0
         EOF
