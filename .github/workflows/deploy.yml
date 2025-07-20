@@ -41,5 +41,5 @@ jobs:
             docker rm allnewsmr-api || true
           fi
         fi
-        # docker run -d --name allnewsmr-api -p 3000:3000 allnewsmr-api
+        docker run -d --name allnewsmr-api -p 3000:3000 allnewsmr-api
         EOF
