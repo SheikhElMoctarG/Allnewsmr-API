@@ -1,4 +1,4 @@
-name: SSH and Git Pull
+name: Deploy Application to Server
 
 on:
   push:
@@ -10,13 +10,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
+    - name: Checkout Repository Code
       uses: actions/checkout@v3
 
-    - name: Install SSH Client
+    - name: Install SSH Client on Runner
       run: sudo apt-get update && sudo apt-get install -y sshpass
 
-    - name: SSH and Git Pull
+    - name: Deploy Application via SSH
       env:
         SSH_HOST: ${{ secrets.SSH_HOST }}
         SSH_USER: ${{ secrets.SSH_USER }}
