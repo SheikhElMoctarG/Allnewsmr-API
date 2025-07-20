@@ -39,6 +39,7 @@ jobs:
           if [ $(docker ps -a -q -f name=allnewsmr-api) ]; then
             docker stop allnewsmr-api || true
             docker rm allnewsmr-api || true
+            echo "removed container allnewsmr-api."
           fi
         fi
         echo "All prompts completed. Starting the container."
